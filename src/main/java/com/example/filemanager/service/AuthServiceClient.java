@@ -1,5 +1,6 @@
 package com.example.filemanager.service;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -9,6 +10,9 @@ import org.springframework.web.client.RestTemplate;
 
 @Service
 public class AuthServiceClient {
+
+    @Value("${soap.service.url}")
+    private String soapUrl;
 
     private final RestTemplate restTemplate = new RestTemplate();
 
@@ -32,7 +36,7 @@ public class AuthServiceClient {
         HttpEntity<String> requestEntity = new HttpEntity<>(soapRequest, headers);
 
         ResponseEntity<String> response = restTemplate.postForEntity(
-                "http://localhost:8081/ws",
+                soapUrl,
                 requestEntity,
                 String.class
         );
