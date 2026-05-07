@@ -1,10 +1,28 @@
 <?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+    Энэ pom.xml файл нь File Manager Service project-ийн Maven тохиргоо юм.
+
+    File Manager Service-ийн үндсэн үүрэг:
+    - image/file upload request хүлээж авах
+    - Authorization token-ийг SOAP Authentication Service-ээр validate хийх
+    - DigitalOcean Spaces object storage рүү file upload хийх
+    - upload болсон file-ийн public URL буцаах
+
+    Энэ service нь Lab 07 дээр нэмэгдсэн distributed file management хэсэг,
+    Lab 08 дээр API Gateway-ийн ард private service хэлбэрээр ажиллаж байна.
+-->
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 
+    <!-- Maven project model version -->
     <modelVersion>4.0.0</modelVersion>
 
+    <!--
+        Spring Boot parent.
+        Энэ parent нь Spring Boot dependency version-уудыг удирдаж өгдөг.
+    -->
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
@@ -12,6 +30,7 @@
         <relativePath/>
     </parent>
 
+    <!-- Project-ийн үндсэн мэдээлэл -->
     <groupId>com.example</groupId>
     <artifactId>file-manager-service</artifactId>
     <version>0.0.1-SNAPSHOT</version>
@@ -19,27 +38,63 @@
     <description>File Manager Service for Lab 07</description>
 
     <properties>
+        <!-- Project Java 21 дээр compile/build хийгдэнэ -->
         <java.version>21</java.version>
     </properties>
 
     <dependencies>
+
+        <!--
+            Spring Web Services / Web dependency.
+
+            Энэ project дээр REST endpoint болон HTTP request handling хийхэд ашиглагдаж байна.
+            FileController нь /files/upload endpoint-оор multipart request авдаг.
+            Мөн AuthServiceClient нь SOAP XML request илгээхэд web-related component ашиглаж байна.
+        -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-webservices</artifactId>
         </dependency>
 
+        <!--
+            AWS S3 SDK dependency.
+
+            DigitalOcean Spaces нь AWS S3 compatible API ашигладаг.
+            Тиймээс AmazonS3 client ашиглаж DigitalOcean Spaces bucket рүү file upload хийж байна.
+
+            FileService дээр:
+            - AmazonS3
+            - AmazonS3ClientBuilder
+            - PutObjectRequest
+            - CannedAccessControlList.PublicRead
+
+            зэрэг class-уудыг энэ dependency-ээс ашигладаг.
+        -->
         <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-java-sdk-s3</artifactId>
             <version>1.12.767</version>
         </dependency>
 
+        <!--
+            Lombok dependency.
+
+            Boilerplate code багасгахад ашиглаж болно.
+            Энэ project дээр одоогоор гол logic class-ууд гараар constructor бичсэн байгаа ч
+            Lombok dependency үлдсэн байна.
+        -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <optional>true</optional>
         </dependency>
 
+        <!--
+            Test dependency.
+
+            SOAP/Web Service test бичих үед ашиглагдана.
+            scope=test тул зөвхөн test үед хэрэглэгдэнэ.
+        -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-webservices-test</artifactId>
@@ -49,9 +104,17 @@
 
     <build>
         <plugins>
+
+            <!--
+                Maven Compiler Plugin.
+
+                Lombok annotation processor-ийг compile үед ажиллуулахад ашиглаж байна.
+                Хэрэв Lombok annotation ашигласан class байвал энэ plugin compile үед боловсруулна.
+            -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
+
                 <configuration>
                     <annotationProcessorPaths>
                         <path>
@@ -62,11 +125,21 @@
                 </configuration>
             </plugin>
 
+            <!--
+                Spring Boot Maven Plugin.
+
+                Project-ийг executable jar болгож package хийхэд ашиглана.
+                Droplet дээр systemd service энэ jar файлыг java -jar командаар ажиллуулдаг.
+            -->
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+
                 <configuration>
                     <excludes>
+                        <!--
+                            Lombok нь compile-time хэрэгсэл тул final jar дотор оруулах шаардлагагүй.
+                        -->
                         <exclude>
                             <groupId>org.projectlombok</groupId>
                             <artifactId>lombok</artifactId>
